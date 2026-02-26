@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:gluestack.io)",
+      "WebFetch(domain:www.nativewind.dev)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(ls:*)",
+      "Bash(node -e:*)",
+      "Bash(npm ls:*)",
+      "Bash(npx gluestack-ui@latest init)",
+      "Bash(npx gluestack-ui@latest init --yes)",
+      "Bash(npx gluestack-ui@latest init:*)",
+      "Bash(npm install:*)",
+      "Bash(npx gluestack-ui add box text vstack hstack pressable --yes)",
+      "Bash(npx gluestack-ui add:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npx tsc:*)",
+      "Bash(echo:*)",
+      "WebFetch(domain:thmanyah.com)",
+      "Bash(cd:*)",
+      "Bash(npx expo install:*)",
+      "WebFetch(domain:www.behance.net)",
+      "Bash(curl:*)",
+      "Bash(git checkout:*)",
+      "Bash(xargs:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(npx expo start --web --port 8081)",
+      "Bash(npx expo start --web --port 8082)",
+      "Bash(npx expo start --web --port 8082 --clear)",
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(powershell -Command \":*)",
+      "WebFetch(domain:firebase.google.com)",
+      "WebFetch(domain:docs.expo.dev)",
+      "WebFetch(domain:react-native-google-signin.github.io)",
+      "Bash(tasklist /FI \"IMAGENAME eq node.exe\" /NH)"
+    ]
+  }
+}

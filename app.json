@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "CalGPA",
+    "slug": "CalGPA",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/logo/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/logo/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#2D5A3D"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.calgpa.app"
+    },
+    "android": {
+      "package": "com.calgpa.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/logo/adaptive-icon.png",
+        "backgroundColor": "#2D5A3D"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "supportsRTL": true,
+      "softwareKeyboardLayoutMode": "pan"
+    },
+    "extra": {
+      "supportsRTL": true,
+      "eas": {
+        "projectId": "147e6bcd-7a2c-45c4-9422-d2b6f5862914"
+      }
+    },
+    "web": {
+      "favicon": "./assets/logo/favicon.png"
+    },
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}
