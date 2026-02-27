@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, ScrollView, Text, View } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../utils/haptics';
 import ScreenLayout from '../components/ScreenLayout';
 import ScreenHeader from '../components/ScreenHeader';
 import { Pressable } from '../components/ui/pressable';

@@ -1,9 +1,9 @@
 import { useEffect, useMemo } from 'react';
 import { StyleSheet, ScrollView, View, Text as RNText, Linking } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { MotiView } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
+import AnimatedView from '../components/AnimatedView';
+import * as Haptics from '../utils/haptics';
 import ScreenLayout from '../components/ScreenLayout';
 import ScreenHeader from '../components/ScreenHeader';
 import { Pressable } from '../components/ui/pressable';
@@ -39,7 +39,7 @@ function NotificationCard({
   const dateLabel = formatDate(item.date);
 
   return (
-    <MotiView
+    <AnimatedView
       from={{ opacity: 0, translateY: 12 }}
       animate={{ opacity: 1, translateY: 0 }}
       transition={{ type: 'spring', damping: 20, stiffness: 140, delay: Math.min(index * 60, 300) }}
@@ -69,7 +69,7 @@ function NotificationCard({
           </Pressable>
         )}
       </View>
-    </MotiView>
+    </AnimatedView>
   );
 }
 
@@ -110,7 +110,7 @@ export default function NotificationsScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         {!loading && notifications.length === 0 ? (
-          <MotiView
+          <AnimatedView
             from={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ type: 'spring', damping: 20, stiffness: 150 }}
@@ -122,7 +122,7 @@ export default function NotificationsScreen() {
                 ستظهر الإشعارات هنا عند وصولها
               </RNText>
             </View>
-          </MotiView>
+          </AnimatedView>
         ) : (
           notifications.map((item, index) => (
             <NotificationCard

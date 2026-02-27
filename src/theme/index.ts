@@ -4,11 +4,9 @@ import { useSettings } from '../context/SettingsContext';
 import { lightColors, darkColors, type ThemeColors } from './colors';
 
 export * from './colors';
-export * from './typography';
 export * from './fonts';
 export * from './spacing';
 export * from './shadows';
-export * from './components';
 export * from './rtl';
 
 /**

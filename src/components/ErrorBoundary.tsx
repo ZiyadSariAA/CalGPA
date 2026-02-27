@@ -1,10 +1,14 @@
 import { Component, type ReactNode } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { colors } from '../theme/colors';
+import { View, Text, StyleSheet, TouchableOpacity, Appearance } from 'react-native';
+import { lightColors, darkColors, type ThemeColors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
 
 type Props = { children: ReactNode };
 type State = { hasError: boolean };
+
+function getColors(): ThemeColors {
+  return Appearance.getColorScheme() === 'dark' ? darkColors : lightColors;
+}
 
 export default class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false };
@@ -23,12 +27,13 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      const c = getColors();
       return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: c.background }]}>
           <Text style={styles.emoji}>⚠️</Text>
-          <Text style={styles.title}>حدث خطأ غير متوقع</Text>
-          <Text style={styles.subtitle}>نعتذر عن هذا الخطأ، يرجى المحاولة مرة أخرى</Text>
-          <TouchableOpacity style={styles.button} onPress={this.handleRetry} activeOpacity={0.8}>
+          <Text style={[styles.title, { color: c.text }]}>حدث خطأ غير متوقع</Text>
+          <Text style={[styles.subtitle, { color: c.textSecondary }]}>نعتذر عن هذا الخطأ، يرجى المحاولة مرة أخرى</Text>
+          <TouchableOpacity style={[styles.button, { backgroundColor: c.primary }]} onPress={this.handleRetry} activeOpacity={0.8}>
             <Text style={styles.buttonText}>إعادة المحاولة</Text>
           </TouchableOpacity>
         </View>
@@ -42,7 +47,6 @@ export default class ErrorBoundary extends Component<Props, State> {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
@@ -54,20 +58,17 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontFamily: fonts.bold,
-    color: colors.text,
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 15,
     fontFamily: fonts.regular,
-    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 24,
   },
   button: {
-    backgroundColor: colors.primary,
     paddingVertical: 14,
     paddingHorizontal: 40,
     borderRadius: 14,

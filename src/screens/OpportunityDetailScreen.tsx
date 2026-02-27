@@ -1,15 +1,10 @@
 import { useState, useMemo } from 'react';
-import { StyleSheet, ScrollView, Linking, View, Image, ActivityIndicator, Share, Platform } from 'react-native';
+import { StyleSheet, ScrollView, Linking, View, Text as RNText, Image, ActivityIndicator, Share, Platform } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MotiView as OriginalMotiView } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from '../utils/haptics';
-
-const MotiView = Platform.OS === 'web' ? View : OriginalMotiView;
-import { Text } from '../components/ui/text';
-import { HStack } from '../components/ui/hstack';
-import { VStack } from '../components/ui/vstack';
+import AnimatedView from '../components/AnimatedView';
 import { Pressable } from '../components/ui/pressable';
 import { useThemeColors, type ThemeColors } from '../theme';
 import { spacing } from '../theme/spacing';
@@ -36,21 +31,21 @@ function InfoSection({
   styles: ReturnType<typeof createStyles>;
 }) {
   return (
-    <MotiView
+    <AnimatedView
       from={{ opacity: 0, translateY: 15 }}
       animate={{ opacity: 1, translateY: 0 }}
       transition={{ type: 'spring', damping: 20, stiffness: 140, delay }}
     >
       <View style={styles.section}>
-        <HStack style={styles.sectionHeader}>
+        <View style={styles.sectionHeader}>
           <View style={styles.sectionIconWrap}>
             <Ionicons name={icon} size={18} color={colors.primary} />
           </View>
-          <Text bold style={styles.sectionTitle}>{title}</Text>
-        </HStack>
+          <RNText style={styles.sectionTitle}>{title}</RNText>
+        </View>
         {children}
       </View>
-    </MotiView>
+    </AnimatedView>
   );
 }
 
@@ -150,7 +145,7 @@ ${appLinks}`.trim();
             <Ionicons name="chevron-forward" size={22} color={colors.text} />
           </View>
         </Pressable>
-        <Text bold style={styles.topBarTitle}>تفاصيل الفرصة</Text>
+        <RNText style={styles.topBarTitle}>تفاصيل الفرصة</RNText>
         <Pressable onPress={handleShare}>
           <View style={styles.backButton}>
             <Ionicons name="share-social-outline" size={22} color={colors.text} />
@@ -163,7 +158,7 @@ ${appLinks}`.trim();
         contentContainerStyle={styles.scrollContent}
       >
         {/* ─── Hero card ─── */}
-        <MotiView
+        <AnimatedView
           from={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: 'spring', damping: 20, stiffness: 150 }}
@@ -179,16 +174,16 @@ ${appLinks}`.trim();
               />
             ) : item.smartIcon && item.smartIcon !== 'briefcase-outline' ? (
               <View style={[styles.heroLogo, { backgroundColor: item.smartIconColor }]}>
-                <Ionicons name={item.smartIcon as any} size={32} color="#FFFFFF" />
+                <Ionicons name={item.smartIcon as any} size={32} color={colors.white} />
               </View>
             ) : (
               <View style={[styles.heroLogo, { backgroundColor: item.logoColor }]}>
-                <Text bold style={styles.heroLogoLetter}>{item.companyAr.charAt(0)}</Text>
+                <RNText style={styles.heroLogoLetter}>{item.companyAr.charAt(0)}</RNText>
               </View>
             )}
 
             {/* Status & type pills */}
-            <HStack style={{ gap: spacing.sm, marginTop: spacing.lg, marginBottom: spacing.sm }}>
+            <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.lg, marginBottom: spacing.sm }}>
               <View
                 style={[
                   styles.statusPill,
@@ -205,14 +200,14 @@ ${appLinks}`.trim();
                     { backgroundColor: isClosed ? colors.error : colors.success },
                   ]}
                 />
-                <Text
+                <RNText
                   style={[
                     styles.statusText,
                     { color: isClosed ? colors.error : colors.success },
                   ]}
                 >
                   {isClosed ? 'مغلق' : 'مفتوح'}
-                </Text>
+                </RNText>
               </View>
 
               {item.type && (
@@ -220,35 +215,35 @@ ${appLinks}`.trim();
                   style={[
                     styles.statusPill,
                     {
-                      backgroundColor: item.type === 'gdp' ? '#2D5A3D1A' : '#1D4ED81A',
+                      backgroundColor: item.type === 'gdp' ? colors.primary + '1A' : colors.secondary + '1A',
                     },
                   ]}
                 >
-                  <Text
+                  <RNText
                     style={[
                       styles.statusText,
-                      { color: item.type === 'gdp' ? '#2D5A3D' : '#1D4ED8' },
+                      { color: item.type === 'gdp' ? colors.primary : colors.secondary },
                     ]}
                   >
                     {item.type === 'gdp' ? 'تطوير خريجين' : 'تدريب تعاوني'}
-                  </Text>
+                  </RNText>
                 </View>
               )}
-            </HStack>
+            </View>
 
             {/* Company name Arabic */}
-            <Text bold style={styles.heroCompanyAr}>{item.companyAr}</Text>
+            <RNText style={styles.heroCompanyAr}>{item.companyAr}</RNText>
 
             {/* Program name */}
-            <Text style={styles.heroProgram}>{item.program}</Text>
+            <RNText style={styles.heroProgram}>{item.program}</RNText>
 
             {/* Company name English */}
-            <Text style={styles.heroCompanyEn}>{item.company}</Text>
+            <RNText style={styles.heroCompanyEn}>{item.company}</RNText>
           </View>
-        </MotiView>
+        </AnimatedView>
 
         {/* ─── Info Sections ─── */}
-        <VStack style={{ gap: spacing.md, marginTop: spacing.md }}>
+        <View style={{ gap: spacing.md, marginTop: spacing.md }}>
           {/* Link */}
           <InfoSection icon="link" title="رابط التقديم" delay={100} colors={colors} styles={styles}>
             <Pressable
@@ -257,20 +252,20 @@ ${appLinks}`.trim();
                 Linking.openURL(item.link);
               }}
             >
-              <Text style={styles.linkText}>{item.link}</Text>
+              <RNText style={styles.linkText}>{item.link}</RNText>
             </Pressable>
           </InfoSection>
 
           {/* Dates */}
           <InfoSection icon="calendar" title="مواعيد التقديم" delay={200} colors={colors} styles={styles}>
-            <Text style={styles.infoText}>{datesText}</Text>
+            <RNText style={styles.infoText}>{datesText}</RNText>
           </InfoSection>
 
           {/* Majors */}
           <InfoSection icon="school" title="التخصصات المطلوبة" delay={300} colors={colors} styles={styles}>
             <View style={styles.majorsWrap}>
-              {item.majors.map((major, i) => (
-                <MotiView
+              {item.majors.map((major: string, i: number) => (
+                <AnimatedView
                   key={major}
                   from={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -282,9 +277,9 @@ ${appLinks}`.trim();
                   }}
                 >
                   <View style={styles.majorChip}>
-                    <Text style={styles.majorText}>{major}</Text>
+                    <RNText style={styles.majorText}>{major}</RNText>
                   </View>
-                </MotiView>
+                </AnimatedView>
               ))}
             </View>
           </InfoSection>
@@ -292,14 +287,14 @@ ${appLinks}`.trim();
           {/* Next opening (only for closed) */}
           {isClosed && item.nextOpening && (
             <InfoSection icon="time" title="الافتتاح القادم" delay={400} colors={colors} styles={styles}>
-              <Text style={styles.infoText}>{item.nextOpening}</Text>
+              <RNText style={styles.infoText}>{item.nextOpening}</RNText>
             </InfoSection>
           )}
-        </VStack>
+        </View>
       </ScrollView>
 
       {/* ─── CTA Button ─── */}
-      <MotiView
+      <AnimatedView
         from={{ opacity: 0, translateY: 20 }}
         animate={{ opacity: 1, translateY: 0 }}
         transition={{ type: 'spring', damping: 18, stiffness: 120, delay: 400 }}
@@ -317,12 +312,12 @@ ${appLinks}`.trim();
               ...(Platform.OS !== 'web' ? [{ transform: [{ scale: ctaPressed ? 0.97 : 1 }] }] : []),
             ]}
           >
-            <Text bold style={{ fontSize: 18, color: '#FFFFFF' }}>
+            <RNText style={styles.ctaButtonText}>
               {isClosed ? 'زيارة الموقع' : 'قدم الآن'}
-            </Text>
+            </RNText>
           </View>
         </Pressable>
-      </MotiView>
+      </AnimatedView>
     </View>
   );
 }
@@ -350,6 +345,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     topBarTitle: {
       fontSize: 17,
+      fontFamily: fonts.bold,
       color: colors.text,
       textAlign: 'right',
     },
@@ -385,7 +381,8 @@ const createStyles = (colors: ThemeColors) =>
     },
     heroLogoLetter: {
       fontSize: 32,
-      color: '#FFFFFF',
+      fontFamily: fonts.bold,
+      color: colors.white,
       textAlign: 'center',
     },
     statusPill: {
@@ -408,17 +405,20 @@ const createStyles = (colors: ThemeColors) =>
     },
     heroCompanyAr: {
       fontSize: 24,
+      fontFamily: fonts.bold,
       color: colors.text,
       textAlign: 'center',
     },
     heroProgram: {
       fontSize: 18,
+      fontFamily: fonts.regular,
       color: colors.textSecondary,
       marginTop: spacing.xs,
       textAlign: 'center',
     },
     heroCompanyEn: {
       fontSize: 14,
+      fontFamily: fonts.regular,
       color: colors.textSecondary,
       marginTop: spacing.xs,
       textAlign: 'center',
@@ -448,17 +448,20 @@ const createStyles = (colors: ThemeColors) =>
     },
     sectionTitle: {
       fontSize: 16,
+      fontFamily: fonts.bold,
       color: colors.text,
       textAlign: 'right',
     },
     linkText: {
       fontSize: 14,
+      fontFamily: fonts.regular,
       color: colors.secondary,
       textDecorationLine: 'underline',
       textAlign: 'right',
     },
     infoText: {
       fontSize: 15,
+      fontFamily: fonts.regular,
       color: colors.text,
       lineHeight: 22,
       textAlign: 'right',
@@ -498,5 +501,10 @@ const createStyles = (colors: ThemeColors) =>
       borderRadius: 16,
       paddingVertical: spacing.lg,
       alignItems: 'center',
+    },
+    ctaButtonText: {
+      fontSize: 18,
+      fontFamily: fonts.bold,
+      color: colors.white,
     },
   });

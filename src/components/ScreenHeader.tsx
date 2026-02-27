@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../utils/haptics';
 import { Pressable } from './ui/pressable';
 import { useThemeColors } from '../theme';
 import { spacing } from '../theme/spacing';
@@ -72,8 +72,8 @@ export default function ScreenHeader({ title, onBack, children, large }: Props) 
   return (
     <View
       style={{
-        paddingLeft: 0,
-        paddingRight: spacing.xl,
+        paddingStart: 0,
+        paddingEnd: spacing.xl,
         paddingBottom: spacing.lg,
         paddingTop: insets.top + spacing.md,
         backgroundColor: colors.surface,

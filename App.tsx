@@ -19,7 +19,7 @@ import { SemesterProvider } from './src/context/SemesterContext';
 import { CVProvider } from './src/context/CVContext';
 import { AppConfigProvider, useAppConfig } from './src/context/AppConfigContext';
 import { NotificationsProvider } from './src/context/NotificationsContext';
-import { SubscriptionProvider } from './src/context/SubscriptionContext';
+
 import { APP_INFO } from './src/data/constants';
 import { fonts } from './src/theme/fonts';
 
@@ -181,6 +181,7 @@ export default function App() {
     IBMPlexSansArabic_500Medium,
     IBMPlexSansArabic_600SemiBold,
     IBMPlexSansArabic_700Bold,
+    ...Ionicons.font,
   });
 
   const onLayoutRootView = useCallback(async () => {
@@ -195,21 +196,19 @@ export default function App() {
 
   return (
     <AppConfigProvider>
-      <SubscriptionProvider>
-        <SettingsProvider>
-          <SemesterProvider>
-            <CVProvider>
-              <NotificationsProvider>
-                <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-                  <ErrorBoundary>
-                    <AppInner />
-                  </ErrorBoundary>
-                </View>
-              </NotificationsProvider>
-            </CVProvider>
-          </SemesterProvider>
-        </SettingsProvider>
-      </SubscriptionProvider>
+      <SettingsProvider>
+        <SemesterProvider>
+          <CVProvider>
+            <NotificationsProvider>
+              <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+                <ErrorBoundary>
+                  <AppInner />
+                </ErrorBoundary>
+              </View>
+            </NotificationsProvider>
+          </CVProvider>
+        </SemesterProvider>
+      </SettingsProvider>
     </AppConfigProvider>
   );
 }

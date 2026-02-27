@@ -19,8 +19,7 @@ import CVJobMatchScreen from '../screens/CVJobMatchScreen';
 import LegalScreen from '../screens/LegalScreen';
 import ContactScreen from '../screens/ContactScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
-import EmailAlertsScreen from '../screens/EmailAlertsScreen';
-import PaywallScreen from '../screens/PaywallScreen';
+
 
 export const navigationRef = createRef<NavigationContainerRef<any>>();
 
@@ -111,12 +110,7 @@ export default function TabNavigator() {
         <RootStack.Screen name="Legal" component={LegalScreen} />
         <RootStack.Screen name="Contact" component={ContactScreen} />
         <RootStack.Screen name="Notifications" component={NotificationsScreen} />
-        <RootStack.Screen name="EmailAlerts" component={EmailAlertsScreen} />
-        <RootStack.Screen
-          name="Paywall"
-          component={PaywallScreen}
-          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-        />
+
       </RootStack.Navigator>
     </NavigationContainer>
   );

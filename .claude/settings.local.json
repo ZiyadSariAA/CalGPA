@@ -1,36 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "WebSearch",
-      "WebFetch(domain:gluestack.io)",
-      "WebFetch(domain:www.nativewind.dev)",
-      "WebFetch(domain:medium.com)",
-      "WebFetch(domain:github.com)",
-      "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(ls:*)",
-      "Bash(node -e:*)",
-      "Bash(npm ls:*)",
-      "Bash(npx gluestack-ui@latest init)",
-      "Bash(npx gluestack-ui@latest init --yes)",
-      "Bash(npx gluestack-ui@latest init:*)",
-      "Bash(npm install:*)",
-      "Bash(npx gluestack-ui add box text vstack hstack pressable --yes)",
-      "Bash(npx gluestack-ui add:*)",
-      "mcp__ide__getDiagnostics",
-      "Bash(npx tsc:*)",
-      "Bash(echo:*)",
-      "WebFetch(domain:thmanyah.com)",
-      "Bash(cd:*)",
-      "Bash(npx expo install:*)",
-      "WebFetch(domain:www.behance.net)",
-      "Bash(curl:*)",
-      "Bash(git checkout:*)",
-      "Bash(xargs:*)",
-      "Bash(where:*)",
-      "Bash(grep:*)",
-      "WebFetch(domain:www.youtube.com)",
-      "Bash(\"$ANDROID_HOME/emulator/emulator\" -list-avds)",
-      "Bash(npx expo start:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

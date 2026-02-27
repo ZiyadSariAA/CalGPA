@@ -35,11 +35,13 @@ function parseConfig(data: Record<string, any>): AppConfig {
     bannerLink: data.bannerLink ?? DEFAULT_APP_CONFIG.bannerLink,
     rateIosLink: data.rateIosLink ?? DEFAULT_APP_CONFIG.rateIosLink,
     rateAndroidLink: data.rateAndroidLink ?? DEFAULT_APP_CONFIG.rateAndroidLink,
+    aiDailyLimit: data.aiDailyLimit ?? DEFAULT_APP_CONFIG.aiDailyLimit,
   };
 }
 
 export function AppConfigProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<AppConfig>(DEFAULT_APP_CONFIG);
+  const [cacheLoaded, setCacheLoaded] = useState(false);
   const [configReady, setConfigReady] = useState(false);
 
   // Hydrate from local cache first (instant, no flicker)
@@ -53,6 +55,8 @@ export function AppConfigProvider({ children }: { children: ReactNode }) {
           if (__DEV__) console.warn('[AppConfig] Failed to parse cached config:', e);
         }
       }
+    }).finally(() => {
+      if (isMounted) setCacheLoaded(true);
     });
     return () => { isMounted = false; };
   }, []);
@@ -82,7 +86,7 @@ export function AppConfigProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AppConfigContext.Provider value={{ config, loaded: configReady, configReady }}>
+    <AppConfigContext.Provider value={{ config, loaded: cacheLoaded || configReady, configReady }}>
       {children}
     </AppConfigContext.Provider>
   );

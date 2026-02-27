@@ -29,6 +29,9 @@ export function useNotifications() {
     ]).then(([seenRaw, clearedRaw]) => {
       if (seenRaw) setLastSeen(Number(seenRaw));
       if (clearedRaw) setClearedAt(Number(clearedRaw));
+    }).catch((e) => {
+      if (__DEV__) console.warn('[useNotifications] Failed to load storage:', e);
+    }).finally(() => {
       setStorageLoaded(true);
     });
   }, []);

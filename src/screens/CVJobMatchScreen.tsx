@@ -1,19 +1,21 @@
 import { useState, useMemo } from 'react';
-import { StyleSheet, ScrollView, View, Text as RNText, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { StyleSheet, ScrollView, View, Text as RNText, TextInput, ActivityIndicator } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { MotiView } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
+import AnimatedView from '../components/AnimatedView';
+import * as Haptics from '../utils/haptics';
 import ScreenLayout from '../components/ScreenLayout';
 import ScreenHeader from '../components/ScreenHeader';
 import { Pressable } from '../components/ui/pressable';
+import { SuggestionCard } from '../components/common';
 import { useThemeColors, type ThemeColors } from '../theme';
 import { spacing } from '../theme/spacing';
 import { fonts } from '../theme/fonts';
 import { shadows } from '../theme/shadows';
 import { useCV } from '../context/CVContext';
-import { canUseAI, recordAIUsage } from '../utils/aiRateLimit';
-import { useSubscription } from '../context/SubscriptionContext';
+
+import { SKILL_MAP, KEYWORD_MAP } from '../data/jobMatchConstants';
+import useAIGeneration from '../hooks/useAIGeneration';
 
 type ImprovedExperience = {
   company: string;
@@ -28,77 +30,7 @@ type Suggestions = {
   keywords: string[];
 };
 
-/* ─── Keyword-to-Skills mapping for offline fallback ─── */
-
-const SKILL_MAP: Record<string, string[]> = {
-  react: ['React', 'React Native', 'JSX', 'Component Architecture'],
-  javascript: ['JavaScript', 'ES6+', 'TypeScript'],
-  typescript: ['TypeScript', 'Type Safety'],
-  python: ['Python', 'Data Analysis', 'Scripting'],
-  java: ['Java', 'OOP', 'Spring Boot'],
-  'c++': ['C++', 'Systems Programming'],
-  node: ['Node.js', 'Express.js', 'REST APIs'],
-  sql: ['SQL', 'Database Management', 'Query Optimization'],
-  database: ['SQL', 'MongoDB', 'Database Design'],
-  cloud: ['AWS', 'Cloud Computing', 'Deployment'],
-  aws: ['AWS', 'EC2', 'S3', 'Cloud Architecture'],
-  azure: ['Microsoft Azure', 'Cloud Services'],
-  docker: ['Docker', 'Containerization', 'DevOps'],
-  kubernetes: ['Kubernetes', 'Container Orchestration'],
-  api: ['REST APIs', 'API Design', 'Integration'],
-  mobile: ['Mobile Development', 'React Native', 'Cross-Platform'],
-  ios: ['iOS Development', 'Swift', 'Mobile Apps'],
-  android: ['Android Development', 'Kotlin', 'Mobile Apps'],
-  web: ['Web Development', 'HTML/CSS', 'Responsive Design'],
-  frontend: ['Frontend Development', 'UI/UX', 'CSS'],
-  backend: ['Backend Development', 'Server Architecture', 'APIs'],
-  fullstack: ['Full-Stack Development', 'Frontend', 'Backend'],
-  'full-stack': ['Full-Stack Development', 'Frontend', 'Backend'],
-  devops: ['DevOps', 'CI/CD', 'Infrastructure'],
-  agile: ['Agile Methodology', 'Scrum', 'Sprint Planning'],
-  scrum: ['Scrum', 'Agile', 'Sprint Management'],
-  git: ['Git', 'Version Control', 'GitHub'],
-  linux: ['Linux', 'Shell Scripting', 'System Administration'],
-  security: ['Cybersecurity', 'Security Protocols', 'Risk Assessment'],
-  network: ['Networking', 'TCP/IP', 'Network Security'],
-  data: ['Data Analysis', 'Data Visualization', 'Reporting'],
-  machine: ['Machine Learning', 'AI', 'Data Science'],
-  ai: ['Artificial Intelligence', 'Machine Learning', 'NLP'],
-  design: ['UI/UX Design', 'Figma', 'User Research'],
-  figma: ['Figma', 'UI Design', 'Prototyping'],
-  project: ['Project Management', 'Planning', 'Stakeholder Communication'],
-  management: ['Management', 'Team Leadership', 'Strategic Planning'],
-  marketing: ['Digital Marketing', 'SEO', 'Content Strategy'],
-  sales: ['Sales', 'CRM', 'Business Development'],
-  support: ['Technical Support', 'Troubleshooting', 'Customer Service'],
-  excel: ['Microsoft Excel', 'Data Analysis', 'Reporting'],
-  power: ['Power BI', 'Data Visualization', 'Analytics'],
-  communication: ['Communication', 'Presentation Skills', 'Writing'],
-  leadership: ['Leadership', 'Team Management', 'Mentoring'],
-  accounting: ['Accounting', 'Financial Analysis', 'Budgeting'],
-  finance: ['Financial Analysis', 'Budgeting', 'Forecasting'],
-  engineering: ['Engineering', 'Problem Solving', 'Technical Documentation'],
-  testing: ['Unit Testing', 'QA', 'Test Automation'],
-  automation: ['Test Automation', 'CI/CD', 'Scripting'],
-};
-
-const KEYWORD_MAP: Record<string, string[]> = {
-  react: ['component-driven', 'SPA', 'state management'],
-  python: ['automation', 'scripting', 'data processing'],
-  cloud: ['scalable', 'cloud-native', 'microservices'],
-  agile: ['agile methodology', 'sprint planning', 'iterative'],
-  management: ['stakeholder management', 'KPIs', 'strategic'],
-  data: ['data-driven', 'analytics', 'insights'],
-  design: ['user-centric', 'responsive', 'accessibility'],
-  security: ['compliance', 'risk mitigation', 'secure coding'],
-  devops: ['continuous integration', 'deployment pipeline', 'monitoring'],
-  mobile: ['cross-platform', 'responsive', 'native performance'],
-  web: ['responsive design', 'SEO', 'performance optimization'],
-  fullstack: ['end-to-end', 'full lifecycle', 'architecture'],
-  'full-stack': ['end-to-end', 'full lifecycle', 'architecture'],
-  leadership: ['cross-functional', 'mentoring', 'decision-making'],
-  support: ['SLA', 'incident resolution', 'customer satisfaction'],
-};
+/* ─── Offline fallback suggestion generator ─── */
 
 function generateOfflineSuggestions(
   jobDesc: string,
@@ -168,115 +100,6 @@ function generateOfflineSuggestions(
   };
 }
 
-/* ─── API call with fallback ─── */
-
-async function tryAPICall(
-  prompt: string,
-  jobDesc: string,
-  currentSkills: string[],
-  experiences: { company: string; description: string }[],
-): Promise<{ suggestions: Suggestions; usedFallback: boolean }> {
-  const API_ENDPOINTS = [
-    {
-      name: 'groq',
-      url: 'https://api.groq.com/openai/v1/chat/completions',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.EXPO_PUBLIC_GROQ_API_KEY}`,
-      },
-      body: { model: 'llama-3.3-70b-versatile', messages: [{ role: 'user', content: prompt }] },
-      extract: (data: any) => data.choices?.[0]?.message?.content,
-    },
-  ];
-
-  for (const api of API_ENDPOINTS) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000);
-
-      const response = await fetch(api.url, {
-        method: 'POST',
-        headers: api.headers,
-        body: JSON.stringify(api.body),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        continue;
-      }
-
-      const json = await response.json();
-      const text = api.extract(json) ?? '';
-
-      if (!text) continue;
-
-      let parsed: any = null;
-      try {
-        parsed = JSON.parse(text);
-      } catch {
-        const match = text.match(/\{[\s\S]*\}/);
-        if (match) {
-          try { parsed = JSON.parse(match[0]); } catch {}
-        }
-      }
-
-      if (
-        parsed?.improvedSummary &&
-        Array.isArray(parsed.suggestedSkills) &&
-        Array.isArray(parsed.keywords)
-      ) {
-        const suggestions: Suggestions = {
-          improvedSummary: parsed.improvedSummary,
-          suggestedSkills: parsed.suggestedSkills,
-          improvedExperiences: Array.isArray(parsed.improvedExperiences) ? parsed.improvedExperiences : [],
-          keywords: parsed.keywords,
-        };
-        return { suggestions, usedFallback: false };
-      }
-    } catch (err: any) {
-    }
-  }
-
-  return { suggestions: generateOfflineSuggestions(jobDesc, currentSkills, experiences), usedFallback: true };
-}
-
-/* ─── Suggestion Card ─── */
-
-function SuggestionCard({
-  title,
-  icon,
-  children,
-  index,
-  s,
-  colors,
-}: {
-  title: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  children: React.ReactNode;
-  index: number;
-  s: ReturnType<typeof createStyles>;
-  colors: ThemeColors;
-}) {
-  return (
-    <MotiView
-      from={{ opacity: 0, translateY: 16 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      transition={{ type: 'spring', damping: 20, stiffness: 140, delay: index * 100 }}
-    >
-      <View style={s.suggestionCard}>
-        <View style={s.suggestionHeader}>
-          <View style={s.suggestionIconWrap}>
-            <Ionicons name={icon} size={18} color={colors.primary} />
-          </View>
-          <RNText style={s.suggestionTitle}>{title}</RNText>
-        </View>
-        {children}
-      </View>
-    </MotiView>
-  );
-}
-
 /* ─── Main Screen ─── */
 
 export default function CVJobMatchScreen() {
@@ -284,14 +107,13 @@ export default function CVJobMatchScreen() {
   const route = useRoute<any>();
   const colors = useThemeColors();
   const s = useMemo(() => createStyles(colors), [colors]);
-  const { isPremium, presentPaywall } = useSubscription();
+  const { generate, loading } = useAIGeneration({ feature: 'jobMatch', timeoutMs: 30000 });
 
   const cvId: string | null = route.params?.cvId ?? null;
   const { getCVById, updateCVData } = useCV();
   const cv = cvId ? getCVById(cvId) : undefined;
 
   const [jobDescription, setJobDescription] = useState('');
-  const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestions | null>(null);
   const [usedFallback, setUsedFallback] = useState(false);
   const [acceptedSummary, setAcceptedSummary] = useState(false);
@@ -302,17 +124,6 @@ export default function CVJobMatchScreen() {
   const handleAnalyze = async () => {
     if (!jobDescription.trim() || loading) return;
 
-    const check = await canUseAI('jobMatch', isPremium);
-    if (!check.allowed) {
-      Alert.alert('تنبيه', check.reason!, [
-        { text: 'إلغاء', style: 'cancel' },
-        { text: 'اشترك في النسخة المميزة', onPress: () => presentPaywall() },
-      ]);
-      return;
-    }
-
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setLoading(true);
     setSuggestions(null);
     setUsedFallback(false);
     setAcceptedSummary(false);
@@ -341,43 +152,55 @@ export default function CVJobMatchScreen() {
           .join('\n\n')
       : 'None';
 
-    const prompt = `Analyze this job description against the user's CV. Be ATS-optimized but HONEST — never invent fake experience or lie.
+    const prompt = `Match this CV to the job description. Return JSON only:
+{"improvedSummary":"...","suggestedSkills":[...],"improvedExperiences":[{"company":"...","originalDescription":"...","improvedDescription":"..."}],"keywords":[...]}
 
-Job Description:
+JOB:
 ${jobDescription}
 
-User's Current CV:
+CV:
 Summary: ${currentSummary || 'None'}
 Skills: ${currentSkills.length > 0 ? currentSkills.join(', ') : 'None listed'}
 Experience:
-${experiencesText}
+${experiencesText}`;
 
-Respond ONLY with a valid JSON object (no markdown, no code blocks, no explanation). Use this EXACT format:
-{
-  "improvedSummary": "ATS-optimized summary (2-3 sentences). Keep same length as original. Don't make it shorter!",
-  "suggestedSkills": ["skill1", "skill2", "skill3", "skill4", "skill5"],
-  "improvedExperiences": [${experiencesForPrompt.map((e: any) => `{"company": "${e.company}", "originalDescription": "${e.description.replace(/"/g, '\\"').replace(/\n/g, '\\n')}", "improvedDescription": "Better version with job-relevant keywords, same length, honest"}`).join(', ')}],
-  "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"]
-}
+    const raw = await generate(prompt);
 
-RULES:
-- improvedSummary: Rewrite to match job keywords. Keep 2-3 sentences. Don't shorten it!
-- suggestedSkills: Skills the user should ADD (not already in their CV). Relevant to the job.
-- improvedExperiences: Rewrite each experience description to use job-relevant keywords. Keep same length. Be HONEST — don't add fake achievements or lie about what they did.
-- keywords: Important ATS terms from the job description that should appear in the CV.`;
+    if (raw) {
+      // Parse JSON response with regex fallback
+      let parsed: any = null;
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        const match = raw.match(/\{[\s\S]*\}/);
+        if (match) {
+          try { parsed = JSON.parse(match[0]); } catch {}
+        }
+      }
 
+      if (
+        parsed?.improvedSummary &&
+        Array.isArray(parsed.suggestedSkills) &&
+        Array.isArray(parsed.keywords)
+      ) {
+        setSuggestions({
+          improvedSummary: parsed.improvedSummary,
+          suggestedSkills: parsed.suggestedSkills,
+          improvedExperiences: Array.isArray(parsed.improvedExperiences) ? parsed.improvedExperiences : [],
+          keywords: parsed.keywords,
+        });
+        setUsedFallback(false);
+        return;
+      }
+    }
+
+    // Fallback: AI failed or returned bad JSON
     const experiencesForFallback = experiencesForPrompt.map((e: any) => ({
       company: e.company,
       description: e.description,
     }));
-
-    const result = await tryAPICall(prompt, jobDescription, currentSkills, experiencesForFallback);
-    if (!result.usedFallback) {
-      await recordAIUsage('jobMatch', isPremium);
-    }
-    setSuggestions(result.suggestions);
-    setUsedFallback(result.usedFallback);
-    setLoading(false);
+    setSuggestions(generateOfflineSuggestions(jobDescription, currentSkills, experiencesForFallback));
+    setUsedFallback(true);
   };
 
   const toggleSkill = (skill: string) => {
@@ -422,7 +245,7 @@ RULES:
     const newSkills = [...Array.from(acceptedSkills), ...Array.from(acceptedKeywords)];
     if (newSkills.length > 0) {
       const allExisting = [...(cv.data.skills.technical || []), ...(cv.data.skills.soft || [])];
-      const uniqueNew = newSkills.filter((s) => !allExisting.includes(s));
+      const uniqueNew = newSkills.filter((sk) => !allExisting.includes(sk));
       if (uniqueNew.length > 0) {
         updates.skills = {
           technical: [...(cv.data.skills.technical || []), ...uniqueNew],
@@ -456,37 +279,6 @@ RULES:
     acceptedKeywords.size > 0 ||
     acceptedExperiences.size > 0;
 
-  if (!isPremium) {
-    return (
-      <ScreenLayout>
-        <ScreenHeader title="تخصيص للوظيفة" onBack={() => navigation.goBack()} />
-        <View style={{ flex: 1, justifyContent: 'center', padding: spacing.xl }}>
-          <MotiView
-            from={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: 'spring', damping: 20, stiffness: 140 }}
-          >
-            <View style={s.lockCard}>
-              <View style={s.lockIconWrap}>
-                <Ionicons name="lock-closed" size={32} color={colors.primary} />
-              </View>
-              <RNText style={s.lockTitle}>ميزة مميزة</RNText>
-              <RNText style={s.lockMessage}>
-                تحليل توافق السيرة الذاتية مع الوظائف متاح فقط للمشتركين في النسخة المميزة
-              </RNText>
-              <Pressable onPress={() => presentPaywall()}>
-                <View style={s.lockUpgradeBtn}>
-                  <Ionicons name="star" size={18} color="#FFFFFF" />
-                  <RNText style={s.lockUpgradeBtnText}>اشترك الآن</RNText>
-                </View>
-              </Pressable>
-            </View>
-          </MotiView>
-        </View>
-      </ScreenLayout>
-    );
-  }
-
   return (
     <ScreenLayout>
       <ScreenHeader title="تخصيص للوظيفة" onBack={() => navigation.goBack()} />
@@ -497,7 +289,7 @@ RULES:
         keyboardShouldPersistTaps="handled"
       >
         {/* Job description input */}
-        <MotiView
+        <AnimatedView
           from={{ opacity: 0, translateY: 12 }}
           animate={{ opacity: 1, translateY: 0 }}
           transition={{ type: 'timing', duration: 400 }}
@@ -524,22 +316,22 @@ RULES:
             <Pressable onPress={handleAnalyze} disabled={loading || !jobDescription.trim()}>
               <View style={[s.analyzeBtn, (!jobDescription.trim() || loading) && s.analyzeBtnDisabled]}>
                 {loading ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <ActivityIndicator size="small" color={colors.white} />
                 ) : (
-                  <Ionicons name="sparkles" size={18} color="#FFFFFF" />
+                  <Ionicons name="sparkles" size={18} color={colors.white} />
                 )}
                 <RNText style={s.analyzeBtnText}>{loading ? 'جاري التحليل...' : 'تحليل واقتراح'}</RNText>
               </View>
             </Pressable>
           </View>
-        </MotiView>
+        </AnimatedView>
 
         {/* Suggestions */}
         {suggestions && (
           <>
             {/* Fallback notice */}
             {usedFallback && (
-              <MotiView
+              <AnimatedView
                 from={{ opacity: 0, translateY: 8 }}
                 animate={{ opacity: 1, translateY: 0 }}
                 transition={{ type: 'timing', duration: 300 }}
@@ -552,11 +344,11 @@ RULES:
                     </RNText>
                   </View>
                 </View>
-              </MotiView>
+              </AnimatedView>
             )}
 
             {/* Improved Summary */}
-            <SuggestionCard title="ملخص محسّن" icon="document-text" index={0} s={s} colors={colors}>
+            <SuggestionCard title="ملخص محسّن" icon="document-text" index={0}>
               <RNText style={s.suggestionBody}>{suggestions.improvedSummary}</RNText>
               <Pressable
                 onPress={() => {
@@ -568,7 +360,7 @@ RULES:
                   <Ionicons
                     name={acceptedSummary ? 'checkmark-circle' : 'add-circle-outline'}
                     size={18}
-                    color={acceptedSummary ? '#FFFFFF' : colors.primary}
+                    color={acceptedSummary ? colors.white : colors.primary}
                   />
                   <RNText style={[s.acceptBtnText, acceptedSummary && s.acceptBtnTextActive]}>
                     {acceptedSummary ? 'تم القبول' : 'قبول الملخص'}
@@ -579,7 +371,7 @@ RULES:
 
             {/* Improved Experiences */}
             {suggestions.improvedExperiences.length > 0 && (
-              <SuggestionCard title="تحسين الخبرات" icon="briefcase" index={1} s={s} colors={colors}>
+              <SuggestionCard title="تحسين الخبرات" icon="briefcase" index={1}>
                 <RNText style={s.suggestionHint}>وصف محسّن لكل خبرة بكلمات مفتاحية من الوظيفة</RNText>
                 {suggestions.improvedExperiences.map((exp, idx) => {
                   const accepted = acceptedExperiences.has(idx);
@@ -607,7 +399,7 @@ RULES:
                           <Ionicons
                             name={accepted ? 'checkmark-circle' : 'swap-horizontal'}
                             size={18}
-                            color={accepted ? '#FFFFFF' : colors.primary}
+                            color={accepted ? colors.white : colors.primary}
                           />
                           <RNText style={[s.acceptBtnText, accepted && s.acceptBtnTextActive]}>
                             {accepted ? 'تم القبول' : 'استبدال بالمحسّن'}
@@ -622,7 +414,7 @@ RULES:
 
             {/* Suggested Skills */}
             {suggestions.suggestedSkills.length > 0 && (
-              <SuggestionCard title="مهارات مقترحة" icon="bulb" index={2} s={s} colors={colors}>
+              <SuggestionCard title="مهارات مقترحة" icon="bulb" index={2}>
                 <RNText style={s.suggestionHint}>اضغط لإضافتها إلى سيرتك الذاتية</RNText>
                 <View style={s.chipWrap}>
                   {suggestions.suggestedSkills.map((skill) => {
@@ -633,7 +425,7 @@ RULES:
                           <Ionicons
                             name={accepted ? 'checkmark' : 'add'}
                             size={14}
-                            color={accepted ? '#FFFFFF' : colors.primary}
+                            color={accepted ? colors.white : colors.primary}
                           />
                           <RNText style={[s.suggestionChipText, accepted && s.suggestionChipTextActive]}>
                             {skill}
@@ -648,7 +440,7 @@ RULES:
 
             {/* Keywords */}
             {suggestions.keywords.length > 0 && (
-              <SuggestionCard title="كلمات مفتاحية مهمة" icon="key" index={3} s={s} colors={colors}>
+              <SuggestionCard title="كلمات مفتاحية مهمة" icon="key" index={3}>
                 <RNText style={s.suggestionHint}>كلمات مفتاحية مهمة من وصف الوظيفة</RNText>
                 <View style={s.chipWrap}>
                   {suggestions.keywords.map((kw) => {
@@ -659,7 +451,7 @@ RULES:
                           <Ionicons
                             name={accepted ? 'checkmark' : 'add'}
                             size={14}
-                            color={accepted ? '#FFFFFF' : colors.secondary}
+                            color={accepted ? colors.white : colors.secondary}
                           />
                           <RNText style={[s.suggestionChipText, accepted && s.suggestionChipTextActive, !accepted && { color: colors.secondary }]}>
                             {kw}
@@ -673,18 +465,18 @@ RULES:
             )}
 
             {/* Apply button */}
-            <MotiView
+            <AnimatedView
               from={{ opacity: 0, translateY: 12 }}
               animate={{ opacity: 1, translateY: 0 }}
               transition={{ type: 'timing', duration: 300, delay: 450 }}
             >
               <Pressable onPress={handleApply} disabled={!hasAcceptedAnything}>
                 <View style={[s.applyBtn, !hasAcceptedAnything && s.applyBtnDisabled]}>
-                  <Ionicons name="checkmark-done" size={20} color="#FFFFFF" />
+                  <Ionicons name="checkmark-done" size={20} color={colors.white} />
                   <RNText style={s.applyBtnText}>تطبيق التغييرات على السيرة الذاتية</RNText>
                 </View>
               </Pressable>
-            </MotiView>
+            </AnimatedView>
           </>
         )}
       </ScrollView>
@@ -759,37 +551,11 @@ const createStyles = (colors: ThemeColors) =>
     analyzeBtnText: {
       fontSize: 15,
       fontFamily: fonts.bold,
-      color: '#FFFFFF',
+      color: colors.white,
       writingDirection: 'rtl',
     },
 
-    /* Suggestion cards */
-    suggestionCard: {
-      backgroundColor: colors.surface,
-      borderRadius: 16,
-      padding: spacing.lg + 2,
-      ...shadows.md,
-    },
-    suggestionHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
-      marginBottom: spacing.md,
-    },
-    suggestionIconWrap: {
-      width: 32,
-      height: 32,
-      borderRadius: 10,
-      backgroundColor: colors.primaryLight,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    suggestionTitle: {
-      fontSize: 15,
-      fontFamily: fonts.semibold,
-      color: colors.text,
-      writingDirection: 'rtl',
-    },
+    /* Suggestion content */
     suggestionBody: {
       fontSize: 13,
       fontFamily: fonts.regular,
@@ -826,7 +592,7 @@ const createStyles = (colors: ThemeColors) =>
       writingDirection: 'rtl',
     },
     acceptBtnTextActive: {
-      color: '#FFFFFF',
+      color: colors.white,
     },
 
     /* Chips */
@@ -856,7 +622,7 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.primary,
     },
     suggestionChipTextActive: {
-      color: '#FFFFFF',
+      color: colors.white,
     },
 
     /* Experience improvement cards */
@@ -919,58 +685,8 @@ const createStyles = (colors: ThemeColors) =>
     applyBtnText: {
       fontSize: 16,
       fontFamily: fonts.bold,
-      color: '#FFFFFF',
+      color: colors.white,
       writingDirection: 'rtl',
     },
 
-    /* Lock card */
-    lockCard: {
-      backgroundColor: colors.surface,
-      borderRadius: 20,
-      padding: spacing['2xl'],
-      alignItems: 'center' as const,
-      ...shadows.md,
-    },
-    lockIconWrap: {
-      width: 64,
-      height: 64,
-      borderRadius: 32,
-      backgroundColor: colors.primaryLight,
-      justifyContent: 'center' as const,
-      alignItems: 'center' as const,
-      marginBottom: spacing.lg,
-    },
-    lockTitle: {
-      fontSize: 20,
-      fontFamily: fonts.bold,
-      color: colors.text,
-      marginBottom: spacing.sm,
-      writingDirection: 'rtl' as const,
-    },
-    lockMessage: {
-      fontSize: 14,
-      fontFamily: fonts.regular,
-      color: colors.textSecondary,
-      textAlign: 'center' as const,
-      lineHeight: 22,
-      marginBottom: spacing.xl,
-      writingDirection: 'rtl' as const,
-    },
-    lockUpgradeBtn: {
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
-      justifyContent: 'center' as const,
-      backgroundColor: colors.primary,
-      borderRadius: 14,
-      paddingVertical: 14,
-      paddingHorizontal: 32,
-      gap: 8,
-      ...shadows.sm,
-    },
-    lockUpgradeBtnText: {
-      fontSize: 16,
-      fontFamily: fonts.bold,
-      color: '#FFFFFF',
-      writingDirection: 'rtl' as const,
-    },
   });

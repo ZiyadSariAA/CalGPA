@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef, type ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSettings } from './SettingsContext';
 
@@ -44,6 +44,8 @@ export function SemesterProvider({ children }: { children: ReactNode }) {
   const { gpaScale } = useSettings();
   const [semesters, setSemesters] = useState<SavedSemester[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const semestersRef = useRef(semesters);
+  semestersRef.current = semesters;
 
   useEffect(() => {
     (async () => {
@@ -57,39 +59,37 @@ export function SemesterProvider({ children }: { children: ReactNode }) {
     })();
   }, []);
 
-  const persist = (next: SavedSemester[]) => {
+  const persist = useCallback((next: SavedSemester[]) => {
     setSemesters(next);
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  };
+  }, []);
 
-  const addSemester = (data: Omit<SavedSemester, 'id' | 'createdAt'>): string => {
+  const addSemester = useCallback((data: Omit<SavedSemester, 'id' | 'createdAt'>): string => {
     const id = generateId();
     const semester: SavedSemester = {
       ...data,
       id,
       createdAt: Date.now(),
     };
-    persist([...semesters, semester]);
+    persist([...semestersRef.current, semester]);
     return id;
-  };
+  }, [persist]);
 
-  const updateSemester = (id: string, updates: Partial<Omit<SavedSemester, 'id' | 'createdAt'>>) => {
-    persist(semesters.map((s) => (s.id === id ? { ...s, ...updates } : s)));
-  };
+  const updateSemester = useCallback((id: string, updates: Partial<Omit<SavedSemester, 'id' | 'createdAt'>>) => {
+    persist(semestersRef.current.map((s) => (s.id === id ? { ...s, ...updates } : s)));
+  }, [persist]);
 
-  const deleteSemester = (id: string) => {
-    persist(semesters.filter((s) => s.id !== id));
-  };
+  const deleteSemester = useCallback((id: string) => {
+    persist(semestersRef.current.filter((s) => s.id !== id));
+  }, [persist]);
 
   const { cumulativeGpa, totalCredits } = useMemo(() => {
-    if (semesters.length === 0) return { cumulativeGpa: 0, totalCredits: 0 };
-    const currentMax = gpaScale === '4' ? 4 : 5;
+    const matching = semesters.filter((s) => s.gpaScale === gpaScale);
+    if (matching.length === 0) return { cumulativeGpa: 0, totalCredits: 0 };
     let totalPoints = 0;
     let totalHrs = 0;
-    for (const s of semesters) {
-      const semesterMax = s.gpaScale === '4' ? 4 : 5;
-      const normalizedGpa = (s.gpa / semesterMax) * currentMax;
-      totalPoints += normalizedGpa * s.creditHours;
+    for (const s of matching) {
+      totalPoints += s.gpa * s.creditHours;
       totalHrs += s.creditHours;
     }
     return {

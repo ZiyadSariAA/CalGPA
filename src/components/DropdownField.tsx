@@ -11,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../utils/haptics';
 import { Pressable } from './ui/pressable';
 import { type ThemeColors } from '../theme';
 import { spacing } from '../theme/spacing';
@@ -317,7 +317,7 @@ const createStyles = (colors: ThemeColors, screenHeight: number) =>
     customConfirmText: {
       fontSize: 15,
       fontFamily: fonts.bold,
-      color: '#FFFFFF',
+      color: colors.white,
       writingDirection: 'rtl',
     },
   });

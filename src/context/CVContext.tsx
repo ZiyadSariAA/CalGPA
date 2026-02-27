@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { EMPTY_CV_DATA } from '../data/cvDummyData';
+import { EMPTY_CV_DATA } from '../data/cvConstants';
 import type { CV, CVData, CVTemplate } from '../types/cv';
 
 type CVContextType = {
@@ -23,6 +23,21 @@ const STORAGE_KEY = 'cv_list';
 
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+/** Migrate a CV's data to the current schema (runs idempotently). */
+function migrateCV(cv: CV): CV {
+  const d = { ...cv.data } as any;
+  if (Array.isArray(d.skills)) {
+    d.skills = { technical: d.skills, soft: [] };
+  }
+  if (!d.personalInfo.professionalTitle) {
+    d.personalInfo = { ...d.personalInfo, professionalTitle: '' };
+  }
+  if (!Array.isArray(d.projects)) {
+    d.projects = [];
+  }
+  return { ...cv, data: d as typeof cv.data };
 }
 
 const CVContext = createContext<CVContextType>({
@@ -51,6 +66,13 @@ export function CVProvider({ children }: { children: ReactNode }) {
   const cvsRef = useRef(cvs);
   cvsRef.current = cvs;
 
+  // Clean up debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
   // Hydrate from AsyncStorage
   useEffect(() => {
     (async () => {
@@ -58,19 +80,7 @@ export function CVProvider({ children }: { children: ReactNode }) {
         const raw = await AsyncStorage.getItem(STORAGE_KEY);
         if (raw) {
           const parsed: CV[] = JSON.parse(raw);
-          const migrated = parsed.map(cv => {
-            const d = { ...cv.data } as any;
-            if (Array.isArray(d.skills)) {
-              d.skills = { technical: d.skills, soft: [] };
-            }
-            if (!d.personalInfo.professionalTitle) {
-              d.personalInfo = { ...d.personalInfo, professionalTitle: '' };
-            }
-            if (!Array.isArray(d.projects)) {
-              d.projects = [];
-            }
-            return { ...cv, data: d as typeof cv.data };
-          });
+          const migrated = parsed.map(migrateCV);
           setCvs(migrated);
         }
       } catch (e) {
@@ -108,16 +118,10 @@ export function CVProvider({ children }: { children: ReactNode }) {
   const loadCV = useCallback((id: string) => {
     const cv = cvsRef.current.find((c) => c.id === id);
     if (cv) {
+      const migrated = migrateCV(cv);
       setCurrentCvId(id);
-      let data = { ...cv.data } as any;
-      if (Array.isArray(data.skills)) {
-        data.skills = { technical: data.skills as unknown as string[], soft: [] };
-      }
-      if (!Array.isArray(data.projects)) {
-        data.projects = [];
-      }
-      setCurrentCvData(data as typeof cv.data);
-      setCurrentTemplate(cv.template);
+      setCurrentCvData(migrated.data);
+      setCurrentTemplate(migrated.template);
     }
   }, []);
 

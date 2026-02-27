@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { StyleSheet, ScrollView, View, Text as RNText, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { MotiView } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
+import AnimatedView from '../components/AnimatedView';
+import * as Haptics from '../utils/haptics';
 import ScreenLayout from '../components/ScreenLayout';
 import ScreenHeader from '../components/ScreenHeader';
 import { Pressable } from '../components/ui/pressable';
@@ -43,7 +43,7 @@ function CVCard({
   });
 
   return (
-    <MotiView
+    <AnimatedView
       from={{ opacity: 0, translateY: 20 }}
       animate={{ opacity: 1, translateY: 0 }}
       transition={{ type: 'spring', damping: 20, stiffness: 140, delay: Math.min(index * 80, 300) }}
@@ -56,7 +56,7 @@ function CVCard({
         onPressIn={() => setPressed(true)}
         onPressOut={() => setPressed(false)}
       >
-        <MotiView
+        <AnimatedView
           animate={{ scale: pressed ? 0.97 : 1 }}
           transition={{ type: 'timing', duration: 100 }}
         >
@@ -129,9 +129,9 @@ function CVCard({
               </Pressable>
             </View>
           </View>
-        </MotiView>
+        </AnimatedView>
       </Pressable>
-    </MotiView>
+    </AnimatedView>
   );
 }
 
@@ -139,7 +139,7 @@ function CVCard({
 
 function EmptyState({ colors, s }: { colors: ThemeColors; s: ReturnType<typeof createStyles> }) {
   return (
-    <MotiView
+    <AnimatedView
       from={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ type: 'spring', damping: 20, stiffness: 150 }}
@@ -153,7 +153,7 @@ function EmptyState({ colors, s }: { colors: ThemeColors; s: ReturnType<typeof c
           أنشئ سيرتك الذاتية الأولى وصدّرها كملف PDF احترافي
         </RNText>
       </View>
-    </MotiView>
+    </AnimatedView>
   );
 }
 
@@ -216,7 +216,7 @@ export default function CVListScreen() {
       </ScrollView>
 
       {/* Create button */}
-      <MotiView
+      <AnimatedView
         from={{ opacity: 0, translateY: 20 }}
         animate={{ opacity: 1, translateY: 0 }}
         transition={{ type: 'spring', damping: 18, stiffness: 120, delay: 200 }}
@@ -230,12 +230,12 @@ export default function CVListScreen() {
             }}
           >
             <View style={s.createBtn}>
-              <Ionicons name="add-circle" size={22} color="#FFFFFF" style={{ marginEnd: 8 }} />
+              <Ionicons name="add-circle" size={22} color={colors.white} style={{ marginEnd: 8 }} />
               <RNText style={s.createBtnText}>إنشاء سيرة ذاتية جديدة</RNText>
             </View>
           </Pressable>
         </View>
-      </MotiView>
+      </AnimatedView>
     </ScreenLayout>
   );
 }
@@ -398,7 +398,7 @@ const createStyles = (colors: ThemeColors) =>
     createBtnText: {
       fontSize: 16,
       fontFamily: fonts.bold,
-      color: '#FFFFFF',
+      color: colors.white,
       textAlign: 'left',
       writingDirection: 'rtl',
     },

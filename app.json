@@ -33,9 +33,6 @@
         "projectId": "147e6bcd-7a2c-45c4-9422-d2b6f5862914"
       }
     },
-    "web": {
-      "favicon": "./assets/logo/favicon.png"
-    },
     "plugins": [
       "expo-font"
     ]

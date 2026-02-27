@@ -8,7 +8,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../utils/haptics';
 import { Pressable } from './ui/pressable';
 import { type ThemeColors } from '../theme';
 import { spacing } from '../theme/spacing';
@@ -113,7 +113,7 @@ export default function MonthYearPicker({
           <Pressable onPress={togglePresent}>
             <View style={s.presentRow}>
               <View style={[s.checkbox, isPresent && s.checkboxChecked]}>
-                {isPresent && <Ionicons name="checkmark" size={12} color="#FFFFFF" />}
+                {isPresent && <Ionicons name="checkmark" size={12} color={colors.white} />}
               </View>
               <RNText style={s.presentText}>حتى الآن</RNText>
             </View>
@@ -416,7 +416,7 @@ const createStyles = (colors: ThemeColors, screenHeight: number) =>
       marginTop: 1,
     },
     chipTextActive: {
-      color: '#FFFFFF',
+      color: colors.white,
     },
 
     /* Year scroll */
@@ -463,7 +463,7 @@ const createStyles = (colors: ThemeColors, screenHeight: number) =>
     confirmText: {
       fontSize: 15,
       fontFamily: fonts.bold,
-      color: '#FFFFFF',
+      color: colors.white,
       writingDirection: 'rtl',
     },
   });

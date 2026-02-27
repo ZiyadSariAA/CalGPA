@@ -9,8 +9,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { MotiView } from 'moti';
-import * as Haptics from 'expo-haptics';
+import AnimatedView from '../components/AnimatedView';
+import * as Haptics from '../utils/haptics';
 import ScreenLayout from '../components/ScreenLayout';
 import ScreenHeader from '../components/ScreenHeader';
 import { Pressable } from '../components/ui/pressable';
@@ -72,7 +72,7 @@ export default function ContactScreen() {
         contentContainerStyle={s.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <MotiView
+        <AnimatedView
           from={{ opacity: 0, translateY: 16 }}
           animate={{ opacity: 1, translateY: 0 }}
           transition={{ type: 'timing', duration: 400, delay: 50 }}
@@ -116,10 +116,10 @@ export default function ContactScreen() {
               textAlign="right"
             />
           </View>
-        </MotiView>
+        </AnimatedView>
 
         {/* Send Button */}
-        <MotiView
+        <AnimatedView
           from={{ opacity: 0, translateY: 16 }}
           animate={{ opacity: 1, translateY: 0 }}
           transition={{ type: 'timing', duration: 400, delay: 150 }}
@@ -130,7 +130,7 @@ export default function ContactScreen() {
             onPressOut={() => setPressed(false)}
             disabled={loading}
           >
-            <MotiView
+            <AnimatedView
               animate={{ scale: pressed ? 0.97 : 1 }}
               transition={{ type: 'timing', duration: 100 }}
               style={[s.sendBtn, loading && { opacity: 0.7 }]}
@@ -140,9 +140,9 @@ export default function ContactScreen() {
               ) : (
                 <Text style={s.sendBtnText}>إرسال</Text>
               )}
-            </MotiView>
+            </AnimatedView>
           </Pressable>
-        </MotiView>
+        </AnimatedView>
       </ScrollView>
     </ScreenLayout>
   );

@@ -15,6 +15,7 @@ export type AppConfig = {
   bannerLink: string;
   rateIosLink: string;
   rateAndroidLink: string;
+  aiDailyLimit: number;
 };
 
 export const DEFAULT_APP_CONFIG: AppConfig = {
@@ -32,4 +33,5 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
   bannerLink: '',
   rateIosLink: '',
   rateAndroidLink: '',
+  aiDailyLimit: 0,
 };

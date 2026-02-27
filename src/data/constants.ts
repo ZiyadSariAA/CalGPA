@@ -4,14 +4,6 @@ export const APP_INFO = {
   supportEmail: 'support@calgpa.app',
 } as const;
 
-export const UNIVERSITIES = [
-  { id: 'kau', label: 'جامعة الملك عبدالعزيز (KAU)' },
-  { id: 'ksu', label: 'جامعة الملك سعود (KSU)' },
-  { id: 'kfupm', label: 'جامعة الملك فهد للبترول (KFUPM)' },
-  { id: 'imam', label: 'جامعة الإمام' },
-  { id: 'other', label: 'أخرى' },
-] as const;
-
 type Grade = {
   label: string;
   ar: string;

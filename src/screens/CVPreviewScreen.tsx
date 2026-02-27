@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { StyleSheet, ScrollView, View, Text as RNText, Alert } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { MotiView } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
+import AnimatedView from '../components/AnimatedView';
+import * as Haptics from '../utils/haptics';
 import ScreenLayout from '../components/ScreenLayout';
 import ScreenHeader from '../components/ScreenHeader';
 import { Pressable } from '../components/ui/pressable';
@@ -11,7 +11,7 @@ import { useThemeColors, type ThemeColors } from '../theme';
 import { spacing } from '../theme/spacing';
 import { fonts } from '../theme/fonts';
 import { shadows } from '../theme/shadows';
-import { TEMPLATE_INFO } from '../data/cvDummyData';
+import { TEMPLATE_INFO } from '../data/cvConstants';
 import { useCV } from '../context/CVContext';
 import { exportCVAsPdf } from '../utils/cvPdfExport';
 import type { CVData, CVTemplate } from '../types/cv';
@@ -280,13 +280,13 @@ export default function CVPreviewScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={s.scrollContent}
       >
-        <MotiView
+        <AnimatedView
           from={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: 'spring', damping: 20, stiffness: 150 }}
         >
           <CVContentPreview data={data} s={s} colors={colors} template={template} />
-        </MotiView>
+        </AnimatedView>
       </ScrollView>
 
       {/* Bottom actions */}
@@ -316,7 +316,7 @@ export default function CVPreviewScreen() {
 
         <Pressable onPress={handleExportPdf}>
           <View style={s.exportBtn}>
-            <Ionicons name="download" size={18} color="#FFFFFF" />
+            <Ionicons name="download" size={18} color={colors.white} />
             <RNText style={s.exportBtnText}>تصدير PDF</RNText>
           </View>
         </Pressable>
@@ -356,7 +356,8 @@ const createStyles = (colors: ThemeColors) =>
       writingDirection: 'rtl',
     },
 
-    /* Preview page — English CV content, must be LTR */
+    /* Preview page — colors are intentionally hardcoded (not themed)
+       because exported PDFs need fixed colors regardless of app theme. */
     previewPage: {
       backgroundColor: '#FFFFFF',
       borderRadius: 8,
@@ -475,7 +476,7 @@ const createStyles = (colors: ThemeColors) =>
     exportBtnText: {
       fontSize: 15,
       fontFamily: fonts.bold,
-      color: '#FFFFFF',
+      color: colors.white,
       writingDirection: 'rtl',
     },
   });
