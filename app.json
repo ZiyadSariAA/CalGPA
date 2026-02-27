@@ -14,7 +14,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.calgpa.app"
+      "bundleIdentifier": "com.calgpa.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.calgpa.app",
@@ -24,7 +27,6 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "supportsRTL": true,
       "softwareKeyboardLayoutMode": "pan"
     },
     "extra": {
