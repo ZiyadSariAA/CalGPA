@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { I18nManager, Text, TextInput, View, Modal, StyleSheet, Linking, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -171,7 +171,7 @@ SplashScreen.preventAutoHideAsync();
 
 // Use Expo's built-in smooth fade (the standard way most apps do it)
 SplashScreen.setOptions({
-  duration: 1200,
+  duration: 2000,
   fade: true,
 });
 
@@ -183,14 +183,22 @@ export default function App() {
     IBMPlexSansArabic_700Bold,
     ...Ionicons.font,
   });
+  const [minDelayDone, setMinDelayDone] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMinDelayDone(true), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const isReady = fontsLoaded && minDelayDone;
 
   const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded) {
+    if (isReady) {
       await SplashScreen.hideAsync();
     }
-  }, [fontsLoaded]);
+  }, [isReady]);
 
-  if (!fontsLoaded) {
+  if (!isReady) {
     return null;
   }
 
