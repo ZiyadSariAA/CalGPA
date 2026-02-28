@@ -171,7 +171,7 @@ SplashScreen.preventAutoHideAsync();
 
 // Use Expo's built-in smooth fade (the standard way most apps do it)
 SplashScreen.setOptions({
-  duration: 800,
+  duration: 1200,
   fade: true,
 });
 
