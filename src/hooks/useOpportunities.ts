@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { opportunities as fallbackData, type Opportunity, type OpportunityType } from '../data/opportunities';
+import { type Opportunity, type OpportunityType } from '../data/opportunities';
 
 /** Deterministic color from string hash */
 function hashColor(str: string): string {
@@ -116,17 +116,14 @@ export function useOpportunities() {
         const snap = await getDocs(collection(db, 'opportunities'));
         if (cancelled) return;
 
-        if (snap.empty) {
-          setOpportunities(fallbackData);
-        } else {
+        if (!snap.empty) {
           const mapped = snap.docs.map((d) =>
             mapFirestoreDoc({ id: d.id, ...d.data() })
           );
           setOpportunities(mapped);
         }
       } catch (err) {
-        if (__DEV__) console.warn('Firestore fetch failed, using fallback data:', err);
-        if (!cancelled) setOpportunities(fallbackData);
+        if (__DEV__) console.warn('[Opportunities] Firestore fetch failed:', err);
       }
       if (!cancelled) setLoading(false);
     }
