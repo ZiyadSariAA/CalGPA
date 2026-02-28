@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { type Opportunity, type OpportunityType } from '../data/opportunities';
 
@@ -109,27 +109,21 @@ export function useOpportunities() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      try {
-        const snap = await getDocs(collection(db, 'opportunities'));
-        if (cancelled) return;
-
-        if (!snap.empty) {
-          const mapped = snap.docs.map((d) =>
-            mapFirestoreDoc({ id: d.id, ...d.data() })
-          );
-          setOpportunities(mapped);
-        }
-      } catch (err) {
-        if (__DEV__) console.warn('[Opportunities] Firestore fetch failed:', err);
+    const unsubscribe = onSnapshot(
+      collection(db, 'opportunities'),
+      (snap) => {
+        const mapped = snap.docs.map((d) =>
+          mapFirestoreDoc({ id: d.id, ...d.data() })
+        );
+        setOpportunities(mapped);
+        setLoading(false);
+      },
+      (err) => {
+        if (__DEV__) console.warn('[Opportunities] Firestore listener failed:', err);
+        setLoading(false);
       }
-      if (!cancelled) setLoading(false);
-    }
-
-    load();
-    return () => { cancelled = true; };
+    );
+    return () => unsubscribe();
   }, []);
 
   return { opportunities, loading };
